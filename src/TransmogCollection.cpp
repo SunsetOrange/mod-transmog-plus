@@ -55,3 +55,14 @@ bool Transmog::AddCollectedAppearance(uint32 accountId, uint32 itemId)
     auto result = accountIt->second.insert(itemId);
     return result.second;
 }
+
+// Unlocked appearances belong to every account, so only other items need the account cache.
+bool Transmog::HasCollectedAppearance(uint32 accountId, uint32 itemId) const
+{
+    if (IsUnlockedAppearance(itemId))
+        return true;
+
+    std::shared_lock<std::shared_mutex> lock(collectionMutex);
+    auto accountIt = collectionCache.find(accountId);
+    return accountIt != collectionCache.end() && accountIt->second.contains(itemId);
+}

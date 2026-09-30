@@ -25,11 +25,31 @@
 #                     Example: "25 35674 5623"
 #        Default:    ""
 #
+#    Transmog.UnlockItemLevel
+#        Description: Grants access to the appearances of all obtainable equipment with an item level at or below this
+#                     value, without having to unlock (equip) them first. All existing transmog rules still apply.
+#                     Applying one of these appearances does not add it to the account's unlocked appearances,
+#                     and lowering the item level threshold will remove available appearances that remain unobtained.
+#                     Lowering the item level threshold will not remove applied appearances from the character's slot.
+#
+#                     An item is considered obtainable when a loot table, vendor, quest reward, profession recipe,
+#                     achievement reward or starting outfit provides it. Rewards of disabled or placeholder quests
+#                     ("Deprecated", "<UNUSED>", ...), NPC-only items ("Monster - ...", "NPC Equip ...") and items
+#                     without a model are skipped.
+#
+#                     Identical appearances (same models and textures) are listed only once as the item with the lowest
+#                     item level that has that appearance.
+#
+#                     Changing this value requires a server restart.
+#                     Example: 100 (unlocks obtainable items up to and including item level 100)
+#        Default:    0 (disabled)
+#
 
 Transmog.Enable = 1
 Transmog.PriceCopper = 1000
 Transmog.Allowed = ""
 Transmog.NotAllowed = ""
+Transmog.UnlockItemLevel = 0
 
 #
 #    REQUIREMENTS

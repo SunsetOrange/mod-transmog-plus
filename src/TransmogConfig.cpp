@@ -21,6 +21,7 @@ void Transmog::LoadConfig()
 
     Allowed = ParseEntryList(sConfigMgr->GetOption<std::string>("Transmog.Allowed", ""));
     NotAllowed = ParseEntryList(sConfigMgr->GetOption<std::string>("Transmog.NotAllowed", ""));
+    UnlockItemLevel = sConfigMgr->GetOption<uint32>("Transmog.UnlockItemLevel", 0);
 
     AllowPoor = sConfigMgr->GetOption<bool>("Transmog.AllowPoor", true);
     AllowCommon = sConfigMgr->GetOption<bool>("Transmog.AllowCommon", true);

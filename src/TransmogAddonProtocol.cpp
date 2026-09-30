@@ -151,10 +151,7 @@ namespace TransmogAddon
         if (!ParseUint32(args, itemId) || itemId == 0)
             return;
 
-        ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
-        if (!itemTemplate ||
-            (itemTemplate->Class != ITEM_CLASS_ARMOR && itemTemplate->Class != ITEM_CLASS_WEAPON) ||
-            TransmogRules_CanNeverTransmog(itemTemplate))
+        if (!TransmogRules_IsCollectible(sObjectMgr->GetItemTemplate(itemId)))
         {
             SendToClient(player, "CollectionStatus:" + std::to_string(itemId) + ":2");
             return;
@@ -163,13 +160,7 @@ namespace TransmogAddon
         uint32 accountId = player->GetSession()->GetAccountId();
         sTransmog->LoadCollectionForAccount(accountId);
 
-        bool collected = false;
-        {
-            std::shared_lock<std::shared_mutex> lock(sTransmog->collectionMutex);
-            auto accountIt = sTransmog->collectionCache.find(accountId);
-            collected = accountIt != sTransmog->collectionCache.end() && accountIt->second.contains(itemId);
-        }
-
+        bool collected = sTransmog->HasCollectedAppearance(accountId, itemId);
         SendToClient(player, "CollectionStatus:" + std::to_string(itemId) + ":" + (collected ? "1" : "0"));
     }
 

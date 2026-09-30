@@ -159,13 +159,8 @@ TransmogApplyResult Transmog::ApplyAppearance(Player* player, uint8 slot, uint32
     }
     else
     {
-        uint32 accountId = player->GetSession()->GetAccountId();
-        {
-            std::shared_lock<std::shared_mutex> lock(collectionMutex);
-            auto accountIt = collectionCache.find(accountId);
-            if (accountIt == collectionCache.end() || !accountIt->second.contains(fakeEntry))
-                return TransmogApplyResult::InvalidAppearance;
-        }
+        if (!HasCollectedAppearance(player->GetSession()->GetAccountId(), fakeEntry))
+            return TransmogApplyResult::InvalidAppearance;
 
         ItemTemplate const* sourceTemplate = sObjectMgr->GetItemTemplate(fakeEntry);
         if (!sourceTemplate || !TransmogRules_CanTransmogrifyItemWithItem(player, targetItem->GetTemplate(), sourceTemplate))
@@ -194,21 +189,47 @@ uint16 Transmog::GetVisibleItemIndex(uint8 slot)
 std::vector<ItemTemplate const*> Transmog::GetValidAppearances(Player* player, ItemTemplate const* targetTemplate)
 {
     std::vector<ItemTemplate const*> result;
-    uint32 accountId = player->GetSession()->GetAccountId();
-
-    std::shared_lock<std::shared_mutex> lock(sTransmog->collectionMutex);
-    auto accountIt = sTransmog->collectionCache.find(accountId);
-    if (accountIt == sTransmog->collectionCache.end())
+    if (!targetTemplate)
         return result;
 
-    for (uint32 itemId : accountIt->second)
+    // Unlocked looks are skipped when the equipped item or a collected item already shows them.
+    std::unordered_set<uint64> shownLooks{ sTransmog->GetLookKey(targetTemplate) };
+    uint32 accountId = player->GetSession()->GetAccountId();
+
     {
-        ItemTemplate const* sourceTemplate = sObjectMgr->GetItemTemplate(itemId);
-        if (!sourceTemplate)
+        std::shared_lock<std::shared_mutex> lock(sTransmog->collectionMutex);
+        auto accountIt = sTransmog->collectionCache.find(accountId);
+        if (accountIt != sTransmog->collectionCache.end())
+        {
+            // Every collected item stays listed so saved outfits keep matching the list.
+            for (uint32 itemId : accountIt->second)
+            {
+                ItemTemplate const* sourceTemplate = sObjectMgr->GetItemTemplate(itemId);
+                if (!sourceTemplate ||
+                    !TransmogRules_CanTransmogrifyItemWithItem(player, targetTemplate, sourceTemplate))
+                    continue;
+
+                result.push_back(sourceTemplate);
+                shownLooks.insert(sTransmog->GetLookKey(sourceTemplate));
+            }
+        }
+    }
+
+    // Each remaining look lists its lowest-level item that this character can use.
+    for (UnlockedLook const& look : sTransmog->unlockedLooks)
+    {
+        if (shownLooks.contains(look.key))
             continue;
 
-        if (TransmogRules_CanTransmogrifyItemWithItem(player, targetTemplate, sourceTemplate))
-            result.push_back(sourceTemplate);
+        for (uint32 itemId : look.items)
+        {
+            ItemTemplate const* sourceTemplate = sObjectMgr->GetItemTemplate(itemId);
+            if (sourceTemplate && TransmogRules_CanTransmogrifyItemWithItem(player, targetTemplate, sourceTemplate))
+            {
+                result.push_back(sourceTemplate);
+                break;
+            }
+        }
     }
 
     std::sort(result.begin(), result.end(), [](ItemTemplate const* a, ItemTemplate const* b)

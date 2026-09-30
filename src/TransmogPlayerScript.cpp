@@ -53,10 +53,7 @@ public:
             return;
 
         ItemTemplate const* itemTemplate = item->GetTemplate();
-        if (itemTemplate->Class != ITEM_CLASS_ARMOR && itemTemplate->Class != ITEM_CLASS_WEAPON)
-            return;
-
-        if (TransmogRules_CanNeverTransmog(itemTemplate))
+        if (!TransmogRules_IsCollectible(itemTemplate))
             return;
 
         uint32 accountId = player->GetSession()->GetAccountId();
@@ -67,6 +64,11 @@ public:
         if (sTransmog->AddCollectedAppearance(accountId, itemId))
         {
             CharacterDatabase.Execute("INSERT INTO mod_transmog_plus_appearances (account_id, item_template_id) VALUES ({}, {})", accountId, itemId);
+
+            // Unlocked appearances already showed as collected, so they are only recorded.
+            if (sTransmog->IsUnlockedAppearance(itemId))
+                return;
+
             TransmogAddon::SendCollectionUpdated(player, itemId);
             ChatHandler(player->GetSession()).PSendSysMessage("{} {}", Transmog::GetItemLink(itemId, player->GetSession()), Tstr(player->GetSession(), LANG_TRANSMOG_APPEARANCE_ADDED));
         }

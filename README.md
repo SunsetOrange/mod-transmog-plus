@@ -9,7 +9,7 @@ Appearances are stored per slot (not per item), so your look stays when you swap
 - Account-wide collection -- any appearance unlocked by one character is available account-wide.
 - Appearances unlock when you equip an item.
 - Option to hide individual armor slots (helm, shoulders, chest, etc.).
-
+- Optional access to every obtainable appearance up to a configurable item level, listed once per appearance.
 
 ## Optional Addon (WIP)
 

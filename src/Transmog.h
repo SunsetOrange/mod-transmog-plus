@@ -110,6 +110,22 @@ public:
     bool IgnoreReqEvent;
     bool IgnoreReqStats;
 
+    // Obtainable appearances up to this item level count as collected on every account; 0 disables it.
+    uint32 UnlockItemLevel;
+
+    // Unlocked items that look identical, ordered from the lowest item level.
+    struct UnlockedLook
+    {
+        uint64 key;
+        std::vector<uint32> items;
+    };
+
+    // Unlock data is built once at startup and only read afterwards, so it needs no lock.
+    std::unordered_set<uint32> unlockedAppearances;
+    std::vector<UnlockedLook> unlockedLooks;
+    // Display IDs mapped to the first display ID with the same models, textures and effects.
+    std::unordered_map<uint32, uint32> visualGroups;
+
     // Account appearance data is shared while logged-in characters reference it.
     std::unordered_map<uint32, std::unordered_set<uint32>> collectionCache;
     std::unordered_map<uint32, uint32> collectionRefCounts;
@@ -123,6 +139,14 @@ public:
     void LoadCollectionForAccount(uint32 accountId);
     void UnrefCollectionForAccount(uint32 accountId);
     bool AddCollectedAppearance(uint32 accountId, uint32 itemId);
+    // Unlocked appearances count as collected without per-account rows.
+    bool HasCollectedAppearance(uint32 accountId, uint32 itemId) const;
+
+    void LoadUnlockedAppearances();
+    bool IsUnlockedAppearance(uint32 itemId) const;
+    // Items with the same key look identical in the same kind of slot.
+    uint64 GetLookKey(ItemTemplate const* proto) const;
+
     uint32 GetAppearanceCost(uint32 fakeEntry) const;
     // Gossip and addon adapters use one server-side mutation path.
     TransmogApplyResult ApplyAppearance(Player* player, uint8 slot, uint32 fakeEntry);
@@ -163,6 +187,7 @@ bool TransmogRules_IsTieredArmorSubclass(uint32 subClass);
 bool TransmogRules_TierAvailable(Player const* player, uint32 tier);
 bool TransmogRules_IsRangedWeapon(uint32 itemClass, uint32 subClass);
 bool TransmogRules_CanNeverTransmog(ItemTemplate const* proto);
+bool TransmogRules_IsCollectible(ItemTemplate const* proto);
 bool TransmogRules_IsItemTransmogrifiable(Player const* player, ItemTemplate const* proto);
 bool TransmogRules_SuitableForTransmogrification(Player const* player, ItemTemplate const* proto);
 bool TransmogRules_CanTransmogrifyItemWithItem(Player const* player, ItemTemplate const* target, ItemTemplate const* source);

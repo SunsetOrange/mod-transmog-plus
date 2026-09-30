@@ -143,6 +143,13 @@ bool TransmogRules_CanNeverTransmog(ItemTemplate const* proto)
         proto->InventoryType == INVTYPE_NECK;
 }
 
+// Only armor and weapons that can show an appearance enter a collection.
+bool TransmogRules_IsCollectible(ItemTemplate const* proto)
+{
+    return proto && (proto->Class == ITEM_CLASS_ARMOR || proto->Class == ITEM_CLASS_WEAPON) &&
+        !TransmogRules_CanNeverTransmog(proto);
+}
+
 // Apply source-item quality, class, and requirement checks before collection use.
 bool TransmogRules_IsItemTransmogrifiable(Player const* player, ItemTemplate const* proto)
 {
