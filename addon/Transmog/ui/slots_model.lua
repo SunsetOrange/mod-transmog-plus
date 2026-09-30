@@ -74,7 +74,7 @@ end
 
 -- Previews a transmog appearance on the selected equipment slot.
 function Transmog_Try(itemId, slotName, newReset)
-	twfdebug("Transmog_Try itemID: " .. itemId .. "slotName: " .. slotName)
+    twfdebug("Transmog_Try itemID: " .. itemId .. "slotName: " .. slotName)
 
     if newReset and getglobal(slotName .. "NoEquip"):IsVisible() then
         return false
@@ -183,11 +183,11 @@ end
 -- Hides all transmog item buttons, optionally using the button's own Hide method.
 function Transmog:hideItems(hideButton)
     for index, button in ipairs(self.ItemButtons) do
-		if hideButton then
-			button:Hide()
-		else
-			getglobal('TransmogLook' .. index):Hide()
-		end
+        if hideButton then
+            button:Hide()
+        else
+            getglobal('TransmogLook' .. index):Hide()
+        end
     end
 end
 
@@ -195,13 +195,13 @@ end
 function Transmog:hideItemBorders()
     for index, _ in ipairs(self.ItemButtons) do
         getglobal('TransmogLook' .. index .. 'Button'):SetNormalTexture('Interface\\AddOns\\Transmog\\assets\\item_bg_normal')
-	end
+    end
 end
 
 -- Selects a gear slot and displays available transmog options for it.
 function selectTransmogSlot(InventorySlotId, slotName)
 
-	twfdebug("selectTransmogSlot slot: " .. InventorySlotId)
+    twfdebug("selectTransmogSlot slot: " .. InventorySlotId)
 
     TransmogFrameNoTransmogs:Hide()
 
@@ -216,7 +216,7 @@ function selectTransmogSlot(InventorySlotId, slotName)
         TransmogFrameCollected:Hide()
         Transmog.currentTransmogSlotName = nil
         Transmog.currentTransmogSlot = nil
-		Transmog.currentTransmogItemClass = nil
+        Transmog.currentTransmogItemClass = nil
         return true
     end
 
@@ -246,7 +246,7 @@ function selectTransmogSlot(InventorySlotId, slotName)
     Transmog:hideItems(false)
     Transmog:hidePlayerItemsBorders()
 
-	Transmog.currentTransmogItemClass = Transmog:ItemClassStrToNum(itemClass) + Transmog:ItemSubclassStrToNum(itemSubclass)
+    Transmog.currentTransmogItemClass = Transmog:ItemClassStrToNum(itemClass) + Transmog:ItemSubclassStrToNum(itemSubclass)
 
     Transmog:renderAvailableTransmogs(Transmog.currentTransmogSlot, Transmog.currentTransmogItemClass)
 end
@@ -259,7 +259,7 @@ end
 
 -- Navigates between pages of transmog options or outfit tabs.
 function Transmog_ChangePage(dir)
-    if Transmog.tab == 'items' then
+    if Transmog.tab == 'items' or Transmog.tab == 'deliberating' then
         if not Transmog.currentTransmogSlot or not Transmog.currentTransmogItemClass then
             return
         end
@@ -288,21 +288,46 @@ function Transmog_revert()
     Transmog:calculateCost(0)
 end
 
--- Switches between the items and outfits tabs.
+-- Tabs above the appearance grid, in display order.
+local APPEARANCE_TABS = {
+    { id = 'items', button = 'TransmogFrameItemsButton', label = 'Items' },
+    { id = 'deliberating', button = 'TransmogFrameDeliberatingButton', label = 'Deliberating' },
+}
+
+-- Switches between the appearance tabs and redraws the grid for the selected slot.
 function Transmog_switchTab(to)
 
-	twfdebug("Transmog_switchTab " .. to)
+    twfdebug("Transmog_switchTab " .. to)
 
     Transmog.tab = to
-    if to == 'items' then
-        TransmogFrameItemsButton:SetNormalTexture('Interface\\AddOns\\Transmog\\assets\\tab_active')
-        TransmogFrameItemsButton:SetPushedTexture('Interface\\AddOns\\Transmog\\assets\\tab_active')
-        TransmogFrameItemsButtonText:SetText(HIGHLIGHT_FONT_COLOR_CODE .. 'Items')
-
-        if Transmog.currentTransmogSlot ~= nil then
-            selectTransmogSlot(Transmog.currentTransmogSlot, Transmog.currentTransmogSlotName)
-        else
-            selectTransmogSlot(-1)
-        end
+    for _, tab in ipairs(APPEARANCE_TABS) do
+        local active = tab.id == to
+        local texture = 'Interface\\AddOns\\Transmog\\assets\\' .. (active and 'tab_active' or 'tab_inactive')
+        local color = active and HIGHLIGHT_FONT_COLOR_CODE or NORMAL_FONT_COLOR_CODE
+        getglobal(tab.button):SetNormalTexture(texture)
+        getglobal(tab.button):SetPushedTexture(texture)
+        getglobal(tab.button .. 'Text'):SetText(color .. tab.label)
     end
+
+    if Transmog.currentTransmogSlot ~= nil then
+        selectTransmogSlot(Transmog.currentTransmogSlot, Transmog.currentTransmogSlotName)
+    else
+        selectTransmogSlot(-1)
+    end
+end
+
+-- Adds an appearance to the Deliberating tab for the selected slot, or removes
+-- it if it is already there.
+function Transmog_ToggleDeliberating(itemId)
+    local slot = Transmog.currentTransmogSlot
+    if not slot or not itemId or itemId == 0 or itemId == Transmog.HIDDEN_ITEM_ID then
+        return
+    end
+
+    if not Transmog.deliberating[slot] then
+        Transmog.deliberating[slot] = {}
+    end
+    Transmog.deliberating[slot][itemId] = not Transmog.deliberating[slot][itemId] or nil
+
+    Transmog:renderAvailableTransmogs(slot, Transmog.currentTransmogItemClass)
 end

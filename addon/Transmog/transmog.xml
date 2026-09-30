@@ -90,7 +90,11 @@
                 </Layers>
                 <Scripts>
                     <OnClick>
+                        if ((button or arg1) == "RightButton") then
+                        Transmog_ToggleDeliberating(this:GetID());
+                        else
                         Transmog_Try(this:GetID(), this:GetName())
+                        end
                     </OnClick>
                 </Scripts>
             </Button>
@@ -801,6 +805,47 @@
                 <Scripts>
                     <OnClick>
                         Transmog_switchTab('items')
+                    </OnClick>
+                </Scripts>
+            </Button>
+            <Button name="$parentDeliberatingButton" inherits="UIPanelButtonTemplate" text="">
+                <NormalTexture name="$parentNormalTexture" file="Interface\AddOns\Transmog\assets\tab_inactive">
+                    <Size>
+                        <AbsDimension x="128" y="32"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </NormalTexture>
+                <PushedTexture name="$parentPushedTexture" file="Interface\AddOns\Transmog\assets\tab_inactive">
+                    <Size>
+                        <AbsDimension x="128" y="32"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </PushedTexture>
+                <Size>
+                    <AbsDimension x="81" y="32"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="331" y="-47"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        Transmog_switchTab('deliberating')
                     </OnClick>
                 </Scripts>
             </Button>

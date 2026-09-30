@@ -14,6 +14,7 @@ Transmog.transmogDataFromServer = {}
 Transmog.transmogStatusFromServer = {}
 Transmog.transmogStatusToServer = {}
 Transmog.tab = ''
+Transmog.deliberating = {}
 Transmog.equippedItems = {}
 Transmog.currentOutfit = nil
 Transmog.equippedTransmogs = {}

@@ -4,9 +4,9 @@ local TransmogFrame_ToNumber = tonumber
 
 -- Updates the collection progress bar with collected count.
 function Transmog:setProgressBar(collected, possible)
-	TransmogFrameCollectedCollectedStatus:SetText("Collected: " .. collected)
+    TransmogFrameCollectedCollectedStatus:SetText("Collected: " .. collected)
 
-	local fillBarWidth = 0;
+    local fillBarWidth = 0;
     TransmogFrameCollectedFillBar:SetPoint("TOPRIGHT", TransmogFrameCollected, "TOPLEFT", fillBarWidth, 0);
     TransmogFrameCollectedFillBar:Show();
 
@@ -42,11 +42,11 @@ end)
 -- Processes available transmog data for a slot and item class, building the display list.
 function Transmog:prepareAvailableTransmogs(slot, itemClass)
 
-	twfdebug("prepareAvailableTransmogs start slot: " .. slot .. " itemClass: " .. itemClass)
+    twfdebug("prepareAvailableTransmogs start slot: " .. slot .. " itemClass: " .. itemClass)
 
-	if not Transmog.availableTransmogItems[slot] then
-		Transmog.availableTransmogItems[slot] = {}
-	end
+    if not Transmog.availableTransmogItems[slot] then
+        Transmog.availableTransmogItems[slot] = {}
+    end
 
     self.availableTransmogItems[slot][itemClass] = {}
 
@@ -54,27 +54,27 @@ function Transmog:prepareAvailableTransmogs(slot, itemClass)
         itemID = TransmogFrame_ToNumber(itemID)
         local name, link, quality, level, min_level, class, subclass, _, inv_type, tex = GetItemInfo(itemID)
 
-		local eqItemLink = nil
-		local inventoryItemLink = GetInventoryItemLink('player', slot)
-		if inventoryItemLink then
-			local _, _, eqItemLink2 = TransmogFrame_Find(inventoryItemLink, "(item:%d+:%d+:%d+:%d+)");
-			eqItemLink = eqItemLink2;
-		end
+        local eqItemLink = nil
+        local inventoryItemLink = GetInventoryItemLink('player', slot)
+        if inventoryItemLink then
+            local _, _, eqItemLink2 = TransmogFrame_Find(inventoryItemLink, "(item:%d+:%d+:%d+:%d+)");
+            eqItemLink = eqItemLink2;
+        end
 
         if not name then
             self:cacheItem(itemID);
             twfdebug("caching item " .. itemID)
             Transmog.availableTransmogsCacheDelay.InventorySlotId = slot
-			Transmog.availableTransmogsCacheDelay.ItemClass = itemClass
+            Transmog.availableTransmogsCacheDelay.ItemClass = itemClass
             Transmog.availableTransmogsCacheDelay:Show()
             return
         end
 
         if name then
-			local reset = false
-			if eqItemLink then
-				reset = itemID == self:IDFromLink(eqItemLink)
-			end
+            local reset = false
+            if eqItemLink then
+                reset = itemID == self:IDFromLink(eqItemLink)
+            end
             table.insert(self.availableTransmogItems[slot][itemClass], {
                 ['id'] = itemID,
                 ['reset'] = reset,
@@ -106,23 +106,68 @@ function Transmog:prepareAvailableTransmogs(slot, itemClass)
         })
     end
 
-	twfdebug("prepareAvailableTransmogs end")
+    twfdebug("prepareAvailableTransmogs end")
+end
+
+local NO_TRANSMOGS_TEXT = "You have yet to uncover any alternative item appearances for this slot. \n"
+    .. "An item's appearance will unlock after you have equipped it."
+local NO_DELIBERATING_TEXT = "Nothing to compare yet. \n"
+    .. "Right-click an appearance in the Items tab to add it here."
+
+-- Returns whether an appearance is flagged on the Deliberating tab for a slot.
+function Transmog:IsDeliberating(slot, itemID)
+    return self.deliberating[slot] ~= nil and self.deliberating[slot][itemID] == true
+end
+
+-- Returns the appearances the current tab shows for a slot: every available
+-- one, or only the flagged ones on the Deliberating tab. Filtering the
+-- available list drops picks that no longer fit the equipped item.
+function Transmog:GetTabItems(slot, itemClass)
+    local available = self.availableTransmogItems[slot][itemClass]
+    if self.tab ~= 'deliberating' then
+        return available
+    end
+
+    local flagged = {}
+    for _, item in ipairs(available) do
+        if self:IsDeliberating(slot, item.id) then
+            table.insert(flagged, item)
+        end
+    end
+    return flagged
 end
 
 -- Renders the grid of transmog item buttons for the currently selected slot.
 function Transmog:renderAvailableTransmogs(slot, itemClass)
 
-	twfdebug("renderAvailableTransmogs slot: " .. slot .. " itemClass: " .. itemClass)
+    twfdebug("renderAvailableTransmogs slot: " .. slot .. " itemClass: " .. itemClass)
 
-	if not self.transmogDataFromServer[slot] then
-		return
-	end
+    if not self.transmogDataFromServer[slot] then
+        return
+    end
 
     self:hideItems(true)
     self:hideItemBorders()
 
-	self:setProgressBar(self:tableSize(self.transmogDataFromServer[slot][itemClass]), self.numTransmogs[slot][itemClass])
-    if self:tableSize(self.transmogDataFromServer[slot][itemClass]) == 0 then
+    local deliberating = self.tab == 'deliberating'
+    local items = self:GetTabItems(slot, itemClass)
+    local itemCount = self:tableSize(items)
+
+    -- Removing the last pick on a page leaves that page empty, so step back.
+    self.totalPages = self:ceil(itemCount / self.ipp)
+    if self.currentPage > math.max(1, self.totalPages) then
+        self.currentPage = math.max(1, self.totalPages)
+    end
+
+    self:setProgressBar(self:tableSize(self.transmogDataFromServer[slot][itemClass]), self.numTransmogs[slot][itemClass])
+    TransmogFrameNoTransmogs:Hide()
+    if deliberating then
+        if itemCount == 0 then
+            TransmogFrameNoTransmogs:SetText(NO_DELIBERATING_TEXT)
+            TransmogFrameNoTransmogs:Show()
+        end
+    elseif self:tableSize(self.transmogDataFromServer[slot][itemClass]) == 0 then
+        TransmogFrameNoTransmogs:SetText(NO_TRANSMOGS_TEXT)
         TransmogFrameNoTransmogs:Show()
     end
 
@@ -131,12 +176,14 @@ function Transmog:renderAvailableTransmogs(slot, itemClass)
     local col = 0
     local itemIndex = 1
 
-    for _, item in ipairs(self.availableTransmogItems[slot][itemClass]) do
+    for _, item in ipairs(items) do
 
         if index >= (self.currentPage - 1) * self.ipp and index < self.currentPage * self.ipp then
 
             if not self.ItemButtons[itemIndex] then
                 self.ItemButtons[itemIndex] = CreateFrame('Frame', 'TransmogLook' .. itemIndex, TransmogFrame, 'TransmogFrameLookTemplate')
+                -- Right-click flags an appearance for the Deliberating tab.
+                getglobal('TransmogLook' .. itemIndex .. 'Button'):RegisterForClicks("LeftButtonUp", "RightButtonUp")
             end
 
             self.ItemButtons[itemIndex]:SetPoint("TOPLEFT", TransmogFrame, "TOPLEFT", 263 + col * 90, -105 - 120 * row)
@@ -158,6 +205,10 @@ function Transmog:renderAvailableTransmogs(slot, itemClass)
             AddButtonOnEnterTextTooltip(getglobal('TransmogLook' .. itemIndex .. 'Button'), color .. item.name)
             if item.reset then
                 getglobal('TransmogLook' .. itemIndex .. 'ButtonRevert'):Show()
+            end
+            -- The check marks picks on the other tabs; here every item is one.
+            if not deliberating and self:IsDeliberating(slot, item.id) then
+                getglobal('TransmogLook' .. itemIndex .. 'ButtonCheck'):Show()
             end
 
             self.ItemButtons[itemIndex]:Show()
@@ -380,8 +431,6 @@ function Transmog:renderAvailableTransmogs(slot, itemClass)
         index = index + 1
     end
 
-    self.totalPages = self:ceil(self:tableSize(self.availableTransmogItems[slot][itemClass]) / self.ipp)
-
     TransmogFramePageText:SetText("Page " .. self.currentPage .. "/" .. self.totalPages)
 
     if self.currentPage == 1 then
@@ -390,7 +439,7 @@ function Transmog:renderAvailableTransmogs(slot, itemClass)
         TransmogFrameLeftArrow:Enable()
     end
 
-    if self.currentPage == self.totalPages or self:tableSize(self.availableTransmogItems[slot][itemClass]) < self.ipp then
+    if self.currentPage == self.totalPages or itemCount < self.ipp then
         TransmogFrameRightArrow:Disable()
     else
         TransmogFrameRightArrow:Enable()
