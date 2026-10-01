@@ -329,5 +329,21 @@ function Transmog_ToggleDeliberating(itemId)
     end
     Transmog.deliberating[slot][itemId] = not Transmog.deliberating[slot][itemId] or nil
 
-    Transmog:renderAvailableTransmogs(slot, Transmog.currentTransmogItemClass)
+    -- Removing a pick changes the Deliberating list itself, so redraw it.
+    if Transmog.tab == 'deliberating' then
+        Transmog:renderAvailableTransmogs(slot, Transmog.currentTransmogItemClass)
+        return
+    end
+
+    -- Elsewhere only the check mark changes, so leave the previews as they are.
+    for index, button in ipairs(Transmog.ItemButtons) do
+        if button.id == itemId and button:IsShown() then
+            local check = getglobal('TransmogLook' .. index .. 'ButtonCheck')
+            if Transmog.deliberating[slot][itemId] then
+                check:Show()
+            else
+                check:Hide()
+            end
+        end
+    end
 end
