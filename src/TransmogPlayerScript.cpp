@@ -64,11 +64,6 @@ public:
         if (sTransmog->AddCollectedAppearance(accountId, itemId))
         {
             CharacterDatabase.Execute("INSERT INTO mod_transmog_plus_appearances (account_id, item_template_id) VALUES ({}, {})", accountId, itemId);
-
-            // Unlocked appearances already showed as collected, so they are only recorded.
-            if (sTransmog->IsUnlockedAppearance(itemId))
-                return;
-
             TransmogAddon::SendCollectionUpdated(player, itemId);
             ChatHandler(player->GetSession()).PSendSysMessage("{} {}", Transmog::GetItemLink(itemId, player->GetSession()), Tstr(player->GetSession(), LANG_TRANSMOG_APPEARANCE_ADDED));
         }
