@@ -483,6 +483,7 @@
                 this:RegisterForDrag("LeftButton");
                 this:SetMovable(1);
                 this:SetUserPlaced(true);
+                this:SetClampedToScreen(true);
             </OnLoad>
             <OnDragStart>
                 this:StartMoving();
@@ -1030,6 +1031,7 @@
                 this:RegisterForDrag("LeftButton");
                 this:SetMovable(1);
                 this:SetUserPlaced(true);
+                this:SetClampedToScreen(true);
                 Transmog_OnLoad();
             </OnLoad>
             <OnShow>
