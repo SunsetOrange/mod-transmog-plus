@@ -57,18 +57,72 @@ function Transmog:frameFromInvType(invType, clientSlot)
     return nil
 end
 
+-- Returns the item a slot should show in the preview: the pending appearance,
+-- else the equipped item, or nil for an empty or hidden slot.
+function Transmog:GetPreviewItem(InventorySlotId)
+    local effective = self.transmogStatusToServer[InventorySlotId]
+    if not effective or effective == 0 then
+        effective = self.equippedItems[InventorySlotId]
+    end
+    if effective and effective ~= 0 and effective ~= Transmog.HIDDEN_ITEM_ID then
+        return effective
+    end
+    return nil
+end
+
 -- Rebuilds the character preview model from scratch, skipping the Hidden
 -- sentinel. DressUpModel has no per-slot TryOff, so we must Undress/re-TryOn.
+-- TryOn has no hand argument either: a ranged weapon replaces what the hands
+-- hold, and the client alternates one-hand weapons between hands without
+-- resetting on Undress. So the ranged item is only shown while it is the slot
+-- being previewed, and when the off hand holds a weapon only one weapon is
+-- shown: the off hand while it is being previewed, otherwise the main hand.
 function Transmog:RefreshPreviewModel()
-    TransmogFramePlayerModel:Undress()
+    local model = TransmogFramePlayerModel
+    local mainHandSlot = self.inventorySlots['MainHandSlot']
+    local offHandSlot = self.inventorySlots['SecondaryHandSlot']
+    local rangedSlot = self.inventorySlots['RangedSlot']
+
+    model:Undress()
     for _, InventorySlotId in pairs(self.inventorySlots) do
-        local effective = self.transmogStatusToServer[InventorySlotId]
-        if not effective or effective == 0 then
-            effective = self.equippedItems[InventorySlotId]
+        if InventorySlotId ~= mainHandSlot and InventorySlotId ~= offHandSlot and InventorySlotId ~= rangedSlot then
+            local item = self:GetPreviewItem(InventorySlotId)
+            if item then
+                model:TryOn(item)
+            end
         end
-        if effective and effective ~= 0 and effective ~= Transmog.HIDDEN_ITEM_ID then
-            TransmogFramePlayerModel:TryOn(effective)
+    end
+
+    local mainHandItem = self:GetPreviewItem(mainHandSlot)
+    local offHandItem = self:GetPreviewItem(offHandSlot)
+    if self.currentTransmogSlot == rangedSlot or (not mainHandItem and not offHandItem) then
+        local rangedItem = self:GetPreviewItem(rangedSlot)
+        if rangedItem then
+            model:TryOn(rangedItem)
         end
+        return
+    end
+
+    -- Shields and held-in-off-hand items always go to the off hand; anything
+    -- else (or an item not cached yet) is treated as a weapon.
+    local _, _, _, _, _, _, _, _, offHandEquipLoc = GetItemInfo(offHandItem or 0)
+    local offHandIsWeapon = offHandItem and offHandEquipLoc ~= 'INVTYPE_SHIELD'
+        and offHandEquipLoc ~= 'INVTYPE_HOLDABLE'
+
+    if offHandIsWeapon then
+        if self.currentTransmogSlot == offHandSlot or not mainHandItem then
+            model:TryOn(offHandItem)
+        else
+            model:TryOn(mainHandItem)
+        end
+        return
+    end
+
+    if mainHandItem then
+        model:TryOn(mainHandItem)
+    end
+    if offHandItem then
+        model:TryOn(offHandItem)
     end
 end
 

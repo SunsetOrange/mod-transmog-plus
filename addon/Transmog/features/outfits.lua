@@ -125,10 +125,6 @@ function Transmog_LoadOutfit(self, outfit)
 
             frame = Transmog:frameFromInvType(eq_slot, slot)
 
-            if hasItemEquipped then
-                TransmogFramePlayerModel:TryOn(itemID)
-            end
-
             if frame then
 
                 getglobal(frame:GetName() .. "ItemIcon"):SetTexture(tex)
@@ -154,6 +150,8 @@ function Transmog_LoadOutfit(self, outfit)
         end
 
     end
+    -- Rebuild once all slots are set so weapons land in the right hands.
+    Transmog:RefreshPreviewModel()
     Transmog:calculateCost()
 end
 

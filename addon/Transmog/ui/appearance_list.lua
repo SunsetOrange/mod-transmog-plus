@@ -360,10 +360,6 @@ function Transmog:renderAvailableTransmogs(slot, itemClass)
 
             model:Undress()
 
-            if self.currentTransmogSlot == self.inventorySlots['SecondaryHandSlot'] then
-                TransmogFramePlayerModel:TryOn(self.equippedItems[self.inventorySlots['MainHandSlot']])
-            end
-
             if item.id ~= Transmog.HIDDEN_ITEM_ID then
                 model:TryOn(item.id);
             end
