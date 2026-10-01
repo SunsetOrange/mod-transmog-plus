@@ -67,6 +67,7 @@ function TransmogFrame_OnShow()
 
 	twfdebug("TransmogFrame_OnShow start")
 
+    Transmog:ApplyWindowScale()
     Transmog_switchTab('items')
     SetPortraitTexture(TransmogFramePortrait, "target");
 
