@@ -83,6 +83,30 @@ Transmog:SetScript("OnEvent", function()
 				twfdebug("CHAT_MSG_ADDON " .. arg2)
 				local message = arg2
 
+				if TransmogFrame_Find(message, "UnlockedAppearances", 1, true) then
+
+					-- Format: UnlockedAppearances:slot:start|id1:id2:...
+					-- Marks which of a slot's available appearances come from the item-level unlock.
+
+					local ex = TransmogFrame_Explode(message, ":")
+					local slot = TransmogFrame_ToNumber(ex[2]) + 1
+
+					if ex[3] == "start" then
+						Transmog.unlockedAppearances[slot] = {}
+						if not Transmog.unlockedTabEnabled then
+							Transmog.unlockedTabEnabled = true
+							Transmog:LayoutTabs()
+						end
+					elseif Transmog.unlockedAppearances[slot] then
+						for i, itemID in ipairs(ex) do
+							if i > 2 and TransmogFrame_ToNumber(itemID) then
+								Transmog.unlockedAppearances[slot][TransmogFrame_ToNumber(itemID)] = true
+							end
+						end
+					end
+					return
+				end
+
 				if TransmogFrame_Find(message, "Open", 1, true) then
 					-- Server requests the transmog UI to open.
 					Transmog.serverRequestsOverlay = true

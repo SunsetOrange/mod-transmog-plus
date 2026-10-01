@@ -77,6 +77,36 @@ namespace TransmogAddon
         SendToClient(player, "TransmogStatus:" + std::to_string(count) + out.str());
     }
 
+// Tell the addon which of a slot's listed appearances come from the item-level unlock.
+    void SendUnlockedForSlot(Player* player, uint8 slot, std::vector<ItemTemplate const*> const& appearances,
+        std::unordered_set<uint32> const& unlockedOnly)
+    {
+        std::string header = "UnlockedAppearances:" + std::to_string(uint32(slot)) + ":";
+        SendToClient(player, header + "start");
+
+        std::ostringstream chunk;
+        size_t count = 0;
+        for (ItemTemplate const* appearance : appearances)
+        {
+            if (!unlockedOnly.contains(appearance->ItemId))
+                continue;
+
+            if (count)
+                chunk << ":";
+            chunk << appearance->ItemId;
+
+            if (++count == MAX_IDS_PER_CHUNK)
+            {
+                SendToClient(player, header + chunk.str());
+                chunk.str("");
+                count = 0;
+            }
+        }
+
+        if (count)
+            SendToClient(player, header + chunk.str());
+    }
+
 // Send one slot in bounded chunks because appearance lists can be large.
     void SendAvailableForSlot(Player* player, uint8 slot)
     {
@@ -84,8 +114,14 @@ namespace TransmogAddon
         ItemTemplate const* targetTemplate = targetItem ? targetItem->GetTemplate() : nullptr;
         uint32 bucket = targetTemplate ? uint32(targetTemplate->Class) + uint32(targetTemplate->SubClass) : 0;
 
-        std::vector<ItemTemplate const*> appearances = Transmog::GetValidAppearances(player, targetTemplate);
+        std::unordered_set<uint32> unlockedOnly;
+        std::vector<ItemTemplate const*> appearances =
+            Transmog::GetValidAppearances(player, targetTemplate, &unlockedOnly);
         uint32 amount = static_cast<uint32>(appearances.size());
+
+        // Sent first so the addon can split the list below into collected and unlocked tabs.
+        if (sTransmog->UnlockItemLevel)
+            SendUnlockedForSlot(player, slot, appearances, unlockedOnly);
 
         std::string header = "AvailableTransmogs:" + std::to_string(uint32(slot)) + ":" + std::to_string(bucket) + ":" + std::to_string(amount) + ":";
 

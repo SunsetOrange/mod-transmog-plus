@@ -179,7 +179,7 @@
     <StatusBar name="TransmogCollectedStatusBarTemplate" virtual="true" drawLayer="BACKGROUND" minValue="0" maxValue="1"
                defaultValue="0">
         <Size>
-            <AbsDimension x="271" y="15"/>
+            <AbsDimension x="135" y="15"/>
         </Size>
         <Layers>
             <Layer level="ARTWORK">
@@ -206,7 +206,7 @@
         <Frames>
             <Button name="$parentBorder">
                 <Size>
-                    <AbsDimension x="281" y="32"/>
+                    <AbsDimension x="145" y="32"/>
                 </Size>
                 <Anchors>
                     <Anchor point="LEFT">
@@ -808,6 +808,47 @@
                     </OnClick>
                 </Scripts>
             </Button>
+            <Button name="$parentUnlockedButton" hidden="true" inherits="UIPanelButtonTemplate" text="">
+                <NormalTexture name="$parentNormalTexture" file="Interface\AddOns\Transmog\assets\tab_inactive">
+                    <Size>
+                        <AbsDimension x="128" y="32"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </NormalTexture>
+                <PushedTexture name="$parentPushedTexture" file="Interface\AddOns\Transmog\assets\tab_inactive">
+                    <Size>
+                        <AbsDimension x="128" y="32"/>
+                    </Size>
+                    <Anchors>
+                        <Anchor point="TOPLEFT">
+                            <Offset>
+                                <AbsDimension x="0" y="0"/>
+                            </Offset>
+                        </Anchor>
+                    </Anchors>
+                </PushedTexture>
+                <Size>
+                    <AbsDimension x="81" y="32"/>
+                </Size>
+                <Anchors>
+                    <Anchor point="TOPLEFT">
+                        <Offset>
+                            <AbsDimension x="331" y="-47"/>
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        Transmog_switchTab('unlocked')
+                    </OnClick>
+                </Scripts>
+            </Button>
             <Button name="$parentDeliberatingButton" inherits="UIPanelButtonTemplate" text="">
                 <NormalTexture name="$parentNormalTexture" file="Interface\AddOns\Transmog\assets\tab_inactive">
                     <Size>
@@ -854,7 +895,7 @@
                 <Anchors>
                     <Anchor point="TOPLEFT">
                         <Offset>
-                            <AbsDimension x="440" y="-49"/>
+                            <AbsDimension x="576" y="-49"/>
                         </Offset>
                     </Anchor>
                 </Anchors>

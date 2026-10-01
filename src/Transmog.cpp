@@ -186,7 +186,8 @@ uint16 Transmog::GetVisibleItemIndex(uint8 slot)
 }
 
 // List construction applies collection, quality, requirement, and compatibility rules.
-std::vector<ItemTemplate const*> Transmog::GetValidAppearances(Player* player, ItemTemplate const* targetTemplate)
+std::vector<ItemTemplate const*> Transmog::GetValidAppearances(Player* player, ItemTemplate const* targetTemplate,
+    std::unordered_set<uint32>* unlockedOnly)
 {
     std::vector<ItemTemplate const*> result;
     if (!targetTemplate)
@@ -227,6 +228,8 @@ std::vector<ItemTemplate const*> Transmog::GetValidAppearances(Player* player, I
             if (sourceTemplate && TransmogRules_CanTransmogrifyItemWithItem(player, targetTemplate, sourceTemplate))
             {
                 result.push_back(sourceTemplate);
+                if (unlockedOnly)
+                    unlockedOnly->insert(itemId);
                 break;
             }
         }

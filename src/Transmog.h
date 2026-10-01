@@ -174,7 +174,9 @@ public:
     static uint16 GetVisibleItemIndex(uint8 slot);
 
     // Gossip and addon list responses share the same filtered appearance set.
-    static std::vector<ItemTemplate const*> GetValidAppearances(Player* player, ItemTemplate const* targetTemplate);
+    // unlockedOnly receives the listed items that come from the unlock rather than the account collection.
+    static std::vector<ItemTemplate const*> GetValidAppearances(Player* player, ItemTemplate const* targetTemplate,
+        std::unordered_set<uint32>* unlockedOnly = nullptr);
 };
 
 #define sTransmog Transmog::instance()

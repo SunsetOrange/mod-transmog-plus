@@ -15,6 +15,10 @@ Transmog.transmogStatusFromServer = {}
 Transmog.transmogStatusToServer = {}
 Transmog.tab = ''
 Transmog.deliberating = {}
+-- Appearances the server lists through the item-level unlock, as [slot][itemID] = true.
+Transmog.unlockedAppearances = {}
+-- Set once the server reports the unlock is enabled; shows the Unlocked tab.
+Transmog.unlockedTabEnabled = false
 Transmog.equippedItems = {}
 Transmog.currentOutfit = nil
 Transmog.equippedTransmogs = {}

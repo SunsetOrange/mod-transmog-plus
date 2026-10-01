@@ -259,7 +259,7 @@ end
 
 -- Navigates between pages of transmog options or outfit tabs.
 function Transmog_ChangePage(dir)
-    if Transmog.tab == 'items' or Transmog.tab == 'deliberating' then
+    if Transmog.tab == 'items' or Transmog.tab == 'unlocked' or Transmog.tab == 'deliberating' then
         if not Transmog.currentTransmogSlot or not Transmog.currentTransmogItemClass then
             return
         end
@@ -290,9 +290,35 @@ end
 
 -- Tabs above the appearance grid, in display order.
 local APPEARANCE_TABS = {
-    { id = 'items', button = 'TransmogFrameItemsButton', label = 'Items' },
+    { id = 'items', button = 'TransmogFrameItemsButton', label = 'Collected' },
+    { id = 'unlocked', button = 'TransmogFrameUnlockedButton', label = 'Unlocked' },
     { id = 'deliberating', button = 'TransmogFrameDeliberatingButton', label = 'Deliberating' },
 }
+
+local TAB_LEFT, TAB_TOP, TAB_WIDTH = 250, -47, 81
+
+-- Positions and highlights the tab buttons. The Unlocked tab only exists
+-- when the server has the item-level unlock enabled; the rest close the gap.
+function Transmog:LayoutTabs()
+    local left = TAB_LEFT
+    for _, tab in ipairs(APPEARANCE_TABS) do
+        local button = getglobal(tab.button)
+        if tab.id == 'unlocked' and not self.unlockedTabEnabled then
+            button:Hide()
+        else
+            local active = tab.id == self.tab
+            local texture = 'Interface\\AddOns\\Transmog\\assets\\' .. (active and 'tab_active' or 'tab_inactive')
+            local color = active and HIGHLIGHT_FONT_COLOR_CODE or NORMAL_FONT_COLOR_CODE
+            button:SetNormalTexture(texture)
+            button:SetPushedTexture(texture)
+            getglobal(tab.button .. 'Text'):SetText(color .. tab.label)
+            button:ClearAllPoints()
+            button:SetPoint("TOPLEFT", TransmogFrame, "TOPLEFT", left, TAB_TOP)
+            button:Show()
+            left = left + TAB_WIDTH
+        end
+    end
+end
 
 -- Switches between the appearance tabs and redraws the grid for the selected slot.
 function Transmog_switchTab(to)
@@ -300,14 +326,7 @@ function Transmog_switchTab(to)
     twfdebug("Transmog_switchTab " .. to)
 
     Transmog.tab = to
-    for _, tab in ipairs(APPEARANCE_TABS) do
-        local active = tab.id == to
-        local texture = 'Interface\\AddOns\\Transmog\\assets\\' .. (active and 'tab_active' or 'tab_inactive')
-        local color = active and HIGHLIGHT_FONT_COLOR_CODE or NORMAL_FONT_COLOR_CODE
-        getglobal(tab.button):SetNormalTexture(texture)
-        getglobal(tab.button):SetPushedTexture(texture)
-        getglobal(tab.button .. 'Text'):SetText(color .. tab.label)
-    end
+    Transmog:LayoutTabs()
 
     if Transmog.currentTransmogSlot ~= nil then
         selectTransmogSlot(Transmog.currentTransmogSlot, Transmog.currentTransmogSlotName)

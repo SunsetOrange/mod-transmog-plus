@@ -112,29 +112,38 @@ end
 local NO_TRANSMOGS_TEXT = "You have yet to uncover any alternative item appearances for this slot. \n"
     .. "An item's appearance will unlock after you have equipped it."
 local NO_DELIBERATING_TEXT = "Nothing to compare yet. \n"
-    .. "Right-click an appearance in the Items tab to add it here."
+    .. "Right-click an appearance in another tab to add it here."
+local NO_UNLOCKED_TEXT = "There are no unlocked appearances for this slot."
 
 -- Returns whether an appearance is flagged on the Deliberating tab for a slot.
 function Transmog:IsDeliberating(slot, itemID)
     return self.deliberating[slot] ~= nil and self.deliberating[slot][itemID] == true
 end
 
--- Returns the appearances the current tab shows for a slot: every available
--- one, or only the flagged ones on the Deliberating tab. Filtering the
--- available list drops picks that no longer fit the equipped item.
-function Transmog:GetTabItems(slot, itemClass)
-    local available = self.availableTransmogItems[slot][itemClass]
-    if self.tab ~= 'deliberating' then
-        return available
-    end
+-- Returns whether the server listed an appearance through the item-level unlock.
+function Transmog:IsUnlockedAppearance(slot, itemID)
+    return self.unlockedAppearances[slot] ~= nil and self.unlockedAppearances[slot][itemID] == true
+end
 
-    local flagged = {}
-    for _, item in ipairs(available) do
-        if self:IsDeliberating(slot, item.id) then
-            table.insert(flagged, item)
+-- Returns the appearances the current tab shows for a slot: the collected
+-- ones, the unlocked ones, or the flagged ones on the Deliberating tab.
+-- Filtering the available list drops picks that no longer fit the equipped item.
+function Transmog:GetTabItems(slot, itemClass)
+    local shown = {}
+    for _, item in ipairs(self.availableTransmogItems[slot][itemClass]) do
+        local show
+        if self.tab == 'deliberating' then
+            show = self:IsDeliberating(slot, item.id)
+        elseif self.tab == 'unlocked' then
+            show = self:IsUnlockedAppearance(slot, item.id)
+        else
+            show = not self:IsUnlockedAppearance(slot, item.id)
+        end
+        if show then
+            table.insert(shown, item)
         end
     end
-    return flagged
+    return shown
 end
 
 -- Renders the grid of transmog item buttons for the currently selected slot.
@@ -159,14 +168,27 @@ function Transmog:renderAvailableTransmogs(slot, itemClass)
         self.currentPage = math.max(1, self.totalPages)
     end
 
-    self:setProgressBar(self:tableSize(self.transmogDataFromServer[slot][itemClass]), self.numTransmogs[slot][itemClass])
+    -- Only collected appearances are counted; unlocked ones are listed separately.
+    local collectedCount = 0
+    for _, itemID in ipairs(self.transmogDataFromServer[slot][itemClass]) do
+        if not self:IsUnlockedAppearance(slot, TransmogFrame_ToNumber(itemID)) then
+            collectedCount = collectedCount + 1
+        end
+    end
+
+    self:setProgressBar(collectedCount, self.numTransmogs[slot][itemClass])
     TransmogFrameNoTransmogs:Hide()
     if deliberating then
         if itemCount == 0 then
             TransmogFrameNoTransmogs:SetText(NO_DELIBERATING_TEXT)
             TransmogFrameNoTransmogs:Show()
         end
-    elseif self:tableSize(self.transmogDataFromServer[slot][itemClass]) == 0 then
+    elseif self.tab == 'unlocked' then
+        if itemCount == 0 then
+            TransmogFrameNoTransmogs:SetText(NO_UNLOCKED_TEXT)
+            TransmogFrameNoTransmogs:Show()
+        end
+    elseif collectedCount == 0 then
         TransmogFrameNoTransmogs:SetText(NO_TRANSMOGS_TEXT)
         TransmogFrameNoTransmogs:Show()
     end
