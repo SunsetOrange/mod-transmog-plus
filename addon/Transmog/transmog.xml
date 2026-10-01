@@ -400,7 +400,7 @@
                 if (arg1 == "RightButton") then
                 Transmog_Try(0, this:GetName(), 'newReset');
                 else
-                selectTransmogSlot(this:GetID(), this:GetName());
+                Transmog_ClickSlot(this:GetID(), this:GetName());
                 end
             </OnMouseDown>
         </Scripts>

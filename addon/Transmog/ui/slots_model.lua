@@ -198,6 +198,18 @@ function Transmog:hideItemBorders()
 	end
 end
 
+-- Clicking the selected slot again deselects it; any other slot is selected.
+function Transmog_ClickSlot(InventorySlotId, slotName)
+    if Transmog.currentTransmogSlot == InventorySlotId then
+        selectTransmogSlot(-1)
+        -- Redraw the preview so it no longer reflects the deselected slot.
+        Transmog:RefreshPreviewModel()
+        return
+    end
+
+    selectTransmogSlot(InventorySlotId, slotName)
+end
+
 -- Selects a gear slot and displays available transmog options for it.
 function selectTransmogSlot(InventorySlotId, slotName)
 
